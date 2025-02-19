@@ -104,7 +104,7 @@ public function show (int $alat_id) {
         }
 	}
 
-	public function update (Request $request, int $alat_id) {
+	public function updatePut (Request $request, int $alat_id) {
 		try {
             $validator = Validator::make($request->all(), [
                 'alat_kategori_id' => 'required|numeric',
@@ -150,6 +150,71 @@ public function show (int $alat_id) {
             return response()->json($response, 500);
         }
 	}
+
+
+
+    public function updatePatch (Request $request, int $alat_id) {
+		try {
+
+            // Cari resource berdasarkan ID
+        $alat = Alat::find($alat_id);
+        if (!$alat) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan not found',
+                'data' => null
+            ], 404);
+        }
+
+        // Ambil hanya atribut yang dikirimkan
+        $data = $request->only([
+            'alat_kategori_id',
+            'alat_nama',
+            'alat_deskripsi',
+            'alat_hargaperhari',
+            'alat_stok'
+]);
+
+            $validator = Validator::make($request->all(), [
+                'alat_kategori_id' => 'sometimes|numeric',
+                'alat_nama' => 'sometimes|string|max:150',
+                'alat_deskripsi' => 'sometimes|string|max:250',
+                'alat_hargaperhari' => 'sometimes|numeric',
+                'alat_stok' => 'sometimes|numeric'
+            ]);
+
+            if ($validator->fails()) {
+                $response = array(
+                    'success' => false,
+                    'message' => 'Failed to create data pelanggan. Data not completed, please check your data.',
+                    'data' => null,
+                    'errors' => $validator->errors()
+                );
+
+                return response()->json($response, 400);
+            }
+
+            $alat = Alat::updateAlat($alat_id, $validator->validated());
+                $response = array(
+                'success' => true,
+                'message' => 'Successfully update product data',
+                'data' => $alat
+            );
+
+            return response()->json($response, 200);
+        } catch (Exception $error) {
+            $response = array(
+                'success' => false,
+                'message' => 'Sorry, there error in internal server',
+                'data' => null,
+                'errors' => $error->getMessage()
+            );
+
+            return response()->json($response, 500);
+        }
+    }
+
+
 	
 	public function destroy (int $alat_id) {
 		try {

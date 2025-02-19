@@ -116,7 +116,7 @@ public function show (int $pelangganData_id) {
         }
 	}
 
-	public function update (Request $request, int $pelangganData_id) {
+	public function updatePut (Request $request, int $pelangganData_id) {
 		try {
             $validator = Validator::make($request->all(), [
                 'pelanggan_data_pelanggan_id' => 'required|numeric',
@@ -154,6 +154,65 @@ public function show (int $pelangganData_id) {
             return response()->json($response, 500);
         }
 	}
+
+    
+    public function updatePatch (Request $request, int $pelangganData_id) {
+		try {
+
+            // Cari resource berdasarkan ID
+        $pelangganData = PelangganData::find($pelangganData_id);
+        if (!$pelangganData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan Data not found',
+                'data' => null
+            ], 404);
+        }
+
+        // Ambil hanya atribut yang dikirimkan
+        $data = $request->only([
+            'pelanggan_data_pelanggan_id',
+            'pelanggan_data_jenis',
+            'pelanggan_data_file'
+    ]);
+
+            $validator = Validator::make($request->all(), [
+                'pelanggan_data_pelanggan_id' => 'sometimes|numeric',
+                'pelanggan_data_jenis' => 'sometimes|in:KTP,SIM',
+                'pelanggan_data_file' => 'sometimes|image|mimes:jpg,png,jpeg'
+            ]);
+
+            if ($validator->fails()) {
+                $response = array(
+                    'success' => false,
+                    'message' => 'Failed to create data product. Data not completed, please check your data.',
+                    'data' => null,
+                    'errors' => $validator->errors()
+                );
+
+                return response()->json($response, 400);
+            }
+
+            $pelangganData = PelangganData::updatePelangganData($pelangganData_id, $validator->validated());
+                $response = array(
+                'success' => true,
+                'message' => 'Successfully update product data',
+                'data' => $pelangganData
+            );
+
+            return response()->json($response, 200);
+        } catch (Exception $error) {
+            $response = array(
+                'success' => false,
+                'message' => 'Sorry, there error in internal server',
+                'data' => null,
+                'errors' => $error->getMessage()
+            );
+
+            return response()->json($response, 500);
+        }
+    }
+
 	
 	public function destroy (int $pelangganData_id) {
 		try {

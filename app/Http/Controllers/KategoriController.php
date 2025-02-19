@@ -105,7 +105,7 @@ public function show (int $kategori_id) {
         }
 	}
 
-	public function update (Request $request, int $kategori_id) {
+	public function updatePut (Request $request, int $kategori_id) {
 		try {
             $validator = Validator::make($request->all(), [
                 'kategori_nama' => 'required|string|max:100',
@@ -147,6 +147,8 @@ public function show (int $kategori_id) {
             return response()->json($response, 500);
         }
 	}
+
+
 	
 	public function destroy (int $kategori_id) {
 		try {

@@ -67,6 +67,8 @@ public function show (int $penyewaan_id) {
                 'penyewaan_totalharga' => 'required|numeric',
             ]);
 
+
+
             if ($validator->fails()) {
                 $response = array(
                     'success' => false,
@@ -98,7 +100,7 @@ public function show (int $penyewaan_id) {
         }
 	}
 
-	public function update (Request $request, int $penyewaan_id) {
+	public function updatePut (Request $request, int $penyewaan_id) {
 		try {
             $validator = Validator::make($request->all(), [
                 'penyewaan_pelanggan_id' => 'required|numeric',
@@ -107,6 +109,69 @@ public function show (int $penyewaan_id) {
                 'penyewaan_sttspembayaran' => 'required|in:LUNAS,BELUM DIBAYAR,DP',
                 'penyewaan_sttskembali' => 'required|in:SUDAH KEMBALI,BELUM KEMBALI',
                 'penyewaan_totalharga' => 'required|numeric',
+            ]);
+
+            if ($validator->fails()) {
+                $response = array(
+                    'success' => false,
+                    'message' => 'Failed to create data product. Data not completed, please check your data.',
+                    'data' => null,
+                    'errors' => $validator->errors()
+                );
+
+                return response()->json($response, 400);
+            }
+
+            $penyewaan = Penyewaan::updatePenyewaan($penyewaan_id, $validator->validated());
+                $response = array(
+                'success' => true,
+                'message' => 'Successfully update product data',
+                'data' => $penyewaan
+            );
+
+            return response()->json($response, 200);
+        } catch (Exception $error) {
+            $response = array(
+                'success' => false,
+                'message' => 'Sorry, there error in internal server',
+                'data' => null,
+                'errors' => $error->getMessage()
+            );
+
+            return response()->json($response, 500);
+        }
+	}
+
+	public function updatePatch (Request $request, int $penyewaan_id) {
+		try {
+
+            // Cari resource berdasarkan ID
+        $penyewaan = Penyewaan::find($penyewaan_id);
+        if (!$penyewaan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Penyewaan not found',
+                'data' => null
+            ], 404);
+        }
+
+        // Ambil hanya atribut yang dikirimkan
+        $data = $request->only([
+            'penyewaan_pelanggan_id',
+            'penyewaan_tglsewa',
+            'penyewaan_tglkembali',
+            'penyewaan_sttspembayaran',
+            'penyewaan_sttskembali',
+            'penyewaan_totalharga'
+        ]);
+
+            $validator = Validator::make($request->all(), [
+                'penyewaan_pelanggan_id' => 'sometimes|numeric',
+                'penyewaan_tglsewa' => 'sometimes|date',
+                'penyewaan_tglkembali' => 'sometimes|date',
+                'penyewaan_sttspembayaran' => 'sometimes|in:LUNAS,BELUM DIBAYAR,DP',
+                'penyewaan_sttskembali' => 'sometimes|in:SUDAH KEMBALI,BELUM KEMBALI',
+                'penyewaan_totalharga' => 'sometimes|numeric',
             ]);
 
             if ($validator->fails()) {
