@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Validator;
 // use Illuminate\support\Facades\Cache;
 use Illuminate\Http\Request;
 use App\Models\Penyewaan;
+use App\Models\PenyewaanDetail;
+use App\Models\Alat;
 
 class PenyewaanController extends Controller
 {
@@ -122,6 +124,31 @@ public function show (int $penyewaan_id) {
                 return response()->json($response, 400);
             }
 
+            $penyewaan = Penyewaan::find($penyewaan_id);
+        if (!$penyewaan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data penyewaan tidak ditemukan.'
+            ], 404);
+        }
+
+        // Jika status pengembalian diubah menjadi "SUDAH KEMBALI"
+        if ($request->penyewaan_sttskembali === 'SUDAH KEMBALI') {
+            // Ambil semua detail penyewaan yang terkait
+            $penyewaanDetail = PenyewaanDetail::where('penyewaan_detail_penyewaan_id', $penyewaan_id)->get();
+
+            foreach ($penyewaanDetail as $detail) {
+                // Ambil data alat
+                $alat = Alat::find($detail->penyewaan_detail_alat_id);
+                if ($alat) {
+                    // Tambahkan stok
+                    $alat->alat_stok += $detail->penyewaan_detail_jumlah;
+                    $alat->save();
+                }
+            }
+        }
+
+        // Update status pengembalian
             $penyewaan = Penyewaan::updatePenyewaan($penyewaan_id, $validator->validated());
                 $response = array(
                 'success' => true,
@@ -184,6 +211,32 @@ public function show (int $penyewaan_id) {
 
                 return response()->json($response, 400);
             }
+
+
+            $penyewaanDetail = PenyewaanDetail::find($penyewaan_id);
+            if (!$penyewaan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data penyewaan tidak ditemukan.'
+                ], 404);
+            }
+    
+            // Jika status pengembalian diubah menjadi "SUDAH KEMBALI"
+            if ($request->penyewaan_sttskembali === 'SUDAH KEMBALI') {
+                // Ambil semua detail penyewaan yang terkait
+                $penyewaanDetail = PenyewaanDetail::where('penyewaan_detail_penyewaan_id', $penyewaan_id)->get();
+    
+                foreach ($penyewaanDetail as $detail) {
+                    // Ambil data alat
+                    $alat = Alat::find($detail->penyewaan_detail_alat_id);
+                    if ($alat) {
+                        // Tambahkan stok
+                        $alat->alat_stok += $detail->penyewaan_detail_jumlah;
+                        $alat->save();
+                    }
+                }
+            }
+    
 
             $penyewaan = Penyewaan::updatePenyewaan($penyewaan_id, $validator->validated());
                 $response = array(

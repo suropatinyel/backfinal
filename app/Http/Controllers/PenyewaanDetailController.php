@@ -63,7 +63,7 @@ public function show (int $penyewaanDetail_id) {
 		try {
             $validator = Validator::make($request->all(), [
                 'penyewaan_detail_penyewaan_id' => 'required|numeric',
-                'penyewaan_detail_alat_id' => 'required|numeric|exist:alat,id',
+                'penyewaan_detail_alat_id' => 'required|numeric|exists:alat,id',
                 'penyewaan_detail_jumlah' => 'required|numeric|min:1',
                 // 'penyewaan_detail_subharga' => 'required|numeric',
             ]);
@@ -75,22 +75,33 @@ public function show (int $penyewaanDetail_id) {
                     'data' => null,
                     'errors' => $validator->errors()
                 );
-
+                
                 return response()->json($response, 400);
             }
-
+            
+            
             $alat = Alat::find($request->penyewaan_detail_alat_id);
+                
             if (!$alat) {
                 $response = [
                     'success' => false,
                     'message' => 'Alat tidak ditemukan.',
                     'data' => null,
                     'errors' => null
-                ];
+                ];    
                 return response()->json($response, 404);
-            }
-    
-            // Ambil data penyewaan untuk mendapatkan durasi sewa
+            }    
+            
+            if ($alat->alat_stok < $request->penyewaan_detail_jumlah) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok alat tidak mencukupi.'
+                ], 400);    
+            }    
+            
+            $alat->alat_stok -= $request->penyewaan_detail_jumlah;
+            $alat->save();
+            
             $penyewaan = Penyewaan::find($request->penyewaan_detail_penyewaan_id);
             if (!$penyewaan) {
                 $response = [
@@ -101,20 +112,21 @@ public function show (int $penyewaanDetail_id) {
                 ];
                 return response()->json($response, 404);
             }
-
             // Hitung total hari penyewaan
-        $tanggalMulai = Carbon::parse($penyewaan->penyewaan_tglsewa); // Ambil tanggal mulai sewa
-        $tanggalSelesai = Carbon::parse($penyewaan->penyewaan_tglkembali); // Ambil tanggal selesai sewa
+            $tanggalMulai = Carbon::parse($penyewaan->penyewaan_tglsewa); // Ambil tanggal mulai sewa
+            $tanggalSelesai = Carbon::parse($penyewaan->penyewaan_tglkembali); // Ambil tanggal selesai sewa
         $totalHari = $tanggalMulai->diffInDays($tanggalSelesai) + 1; // Hitung selisih hari (+1 untuk inklusif)
 
         // Hitung subtotal harga
         $hargaPerHari = $alat->alat_hargaperhari;
-        $penyewaanDetailSubharga = $hargaPerHari * $totalHari * $request->penyewaan_detail_jumlah;
+        $penyewaanDetailSubharga = round($hargaPerHari * $totalHari * $request->penyewaan_detail_jumlah);
 
         // Tambahkan penyewaan_detail_subharga ke data yang akan disimpan
         $data = $validator->validated();
         $data['penyewaan_detail_subharga'] = $penyewaanDetailSubharga;
 
+
+            // Ambil data penyewaan untuk mendapatkan durasi sewa
         // Simpan data penyewaan detail
         $penyewaanDetail = PenyewaanDetail::createPenyewaanDetail($data);
 
@@ -216,11 +228,11 @@ public function show (int $penyewaanDetail_id) {
                 return response()->json($response, 400);
             }
 
-            $penyewaan = Penyewaan::updatePenyewaan($penyewaan_id, $validator->validated());
+            $penyewaanDetail = PenyewaanDetail::updatePenyewaanDetail($penyewaan_detail_id, $validator->validated());
                 $response = array(
                 'success' => true,
-                'message' => 'Successfully update product data',
-                'data' => $penyewaan
+                'message' => 'Successfully update penyewaan detail data',
+                'data' => $penyewaanDetail
             );
 
             return response()->json($response, 200);

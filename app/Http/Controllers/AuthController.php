@@ -38,7 +38,7 @@ class AuthController extends Controller
     
     public function login (Request $request) {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'name' => 'required|string',
             'password' => 'required'
         ]);
         
@@ -53,7 +53,7 @@ class AuthController extends Controller
             return response()->json($response, 400);
         }
 
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->only('name', 'password');
         if (!$token = auth()->attempt($credentials)) {
             $response = array(
                 'success' => false,
@@ -92,7 +92,7 @@ class AuthController extends Controller
     if ($timeLeft > 60) { // 300 detik = 5 menit
         return response()->json([
             'success' => false,
-            'message' => 'Cannot refresh token yet. Try again when token is closer to expiration.',
+            'message' => 'Kesusu ae rek,lawong yo sk knek digwe',
             'time_left' => $timeLeft
         ], 400);
     }
@@ -118,7 +118,7 @@ class AuthController extends Controller
 
     public function logout(Request $request) {
         if (auth()->check()) {
-            auth()->invalidate(true); // Blacklist token sehingga tidak bisa digunakan lagi
+            auth()->logout(true); // Blacklist token sehingga tidak bisa digunakan lagi
     
             return response()->json([
                 'success' => true,
@@ -209,5 +209,29 @@ class AuthController extends Controller
             'message' => 'Password berhasil direset, silakan login dengan password baru.'
         ], 200);
     }
+
+
+    public function index () {
+		try {
+            $user = User::getUser();
+            $response = array(
+                'succes' => true,
+                'message' => 'Data semua user berhasil ditampilkan',
+                'data' => $user
+            );
+
+            return response()->json($response, 200);
+
+    } catch (Exception $error) {
+        $response = array(
+            'success' => false,
+            'message' => 'Sorry, there error in internal server',
+            'data' => null,
+            'errors' => $error->getMessage()
+        );
+
+        return response()->json($response, 500);
+    }
+}
     
 }
