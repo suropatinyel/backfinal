@@ -38,7 +38,7 @@ class AuthController extends Controller
     
     public function login (Request $request) {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required'
         ]);
         
@@ -53,7 +53,7 @@ class AuthController extends Controller
             return response()->json($response, 400);
         }
 
-        $credentials = $request->only('name', 'password');
+        $credentials = $request->only('email', 'password');
         if (!$token = auth()->attempt($credentials)) {
             $response = array(
                 'success' => false,
