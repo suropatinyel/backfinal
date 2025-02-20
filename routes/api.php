@@ -40,7 +40,7 @@ Route::prefix('alat')->middleware('auth:api')->group(function(){
     Route::post('/create', [AlatController::class, 'store']);
     Route::put('/put/{id}', [AlatController::class, 'update']);
     Route::patch('/patch/{id}', [AlatController::class, 'updatePatch']);
-    Route::delete('/delete{id}', [AlatController::class, 'destroy']);
+    Route::delete('/delete/{id}', [AlatController::class, 'destroy']);
 });
 
 
